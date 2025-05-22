@@ -1,0 +1,76 @@
+const express= require ("express")
+const router = express.Router()
+const mongoose =require("mongoose")
+var jwt = require('jsonwebtoken')
+
+const bcrypt = require('bcrypt')
+const saltRounds = 10
+
+let encryptKey='hdtugkuyfvj'
+
+const UserSchema = new mongoose.Schema({
+    email: {type:String, unique:true},
+    username:{type:String},
+    password:{type:String}
+    
+})
+
+
+const UserModel = mongoose.model('users', UserSchema)
+
+router.get("/",async(req,res)=>{
+    let users=  await UserModel.find()
+    res.json(users)
+    res.send("User list")
+})
+
+router.post("/register",(req,res)=>{
+    let emailId=req.body.email
+    console.log(req.body)
+    UserModel.findOne({email:emailId})
+    .then(resData=>{
+        console.log(resData)
+        if(resData){
+            
+            res.status(400).json({message:"User already exists"})
+        }else{
+        
+            
+            bcrypt.hash(req.body.password, saltRounds, async function(err, hash) {
+                if(hash){
+                    const newUser= await UserModel.create({...req.body,password:hash})
+                    
+                    res.json({message:"User created Successfully"})
+                }else{
+                    res.status(400).json({message:"Something went wrong"})
+                }
+            })
+        }
+    })
+})
+
+router.post("/login",async(req,res)=>{
+    let emailId=req.body.email
+    let password=req.body.password
+    const user= await UserModel.findOne({email:emailId})
+    bcrypt.compare(password, user.password, function(err, result) {
+        if(result){
+            var token = jwt.sign({ email: emailId }, encryptKey)
+            res.json({message:"Logged in successfully",token:token})
+                }
+                else{
+                    res.json({message:"Invalid credentials"})
+                }
+    })
+
+})
+
+router.put("/:id",(req,res)=>{
+    res.send("Edit User")
+})
+
+router.delete("/:id",async(req,res)=>{
+    await UserModel.findByIdAndDelete(req.params.id)
+    res.send("Deleted")
+})
+module.exports=router
