@@ -4,7 +4,7 @@ var cors = require('cors')
 const app=express()
 
 app.use(cors({
-    origin:"http://localhost:5173"
+    origin:["http://localhost:5173","https://todo-fullstack-frontend-amber.vercel.app"]
 }))
 const mongoose = require('mongoose');
 const userRoutes=require('./src/routes/userroutes')
